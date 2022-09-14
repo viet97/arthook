@@ -8,7 +8,7 @@ import { StatusBar } from 'react-native';
 export default class App extends Component {
   render() {
     return (
-      <SafeAreaView edges={['right', 'bottom', 'left']} style={{ flex: 1, backgroundColor: Colors.white }}>
+      <SafeAreaView edges={['right', 'bottom', 'left', 'top']} style={{ flex: 1, backgroundColor: Colors.white }}>
         <SafeAreaProvider>
           <StatusBar
             hidden={false}
