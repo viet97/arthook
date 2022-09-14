@@ -21,7 +21,6 @@ export default class NavigationService {
   }
   static clear() {
     if (this._instance) {
-      this._instance.destroy();
       delete this._instance;
     }
   }

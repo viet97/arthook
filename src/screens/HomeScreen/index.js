@@ -19,6 +19,7 @@ import { widthWindow } from '../../utils/DeviceUtil'
 import ImagePicker from 'react-native-image-crop-picker';
 
 const {
+    generateGif
 } = NativeModules.AndroidUtils
 
 export default class HomeScreen extends Component {
@@ -27,7 +28,7 @@ export default class HomeScreen extends Component {
         super(props)
 
         this.state = {
-            listImages: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},]
+            listImages: []
         }
         this.numColumns = 2;
         this.itemMargin = 16;
@@ -74,8 +75,8 @@ export default class HomeScreen extends Component {
             <Pressable
                 onPress={() => alert("click")}>
                 <Image
+                    source={{ uri: item.uri }}
                     style={[{
-                        backgroundColor: 'red',
                         borderRadius: 16
                     }, dynamicStyle]}
                 />
@@ -92,6 +93,7 @@ export default class HomeScreen extends Component {
                 flex: 1,
                 paddingHorizontal: this.listMargin
             }}
+            keyExtractor={(item, index) => item.uri + index}
             contentContainerStyle={styles.listContentContainerStyle}
             renderItem={this.renderImage}
         />
@@ -112,6 +114,10 @@ export default class HomeScreen extends Component {
                     }).then(res => {
                         if (size(res.assets)) {
                             console.log("pick photos", res.assets)
+                            const { listImages } = this.state
+                            this.setState({ listImages: [...res.assets, ...listImages] })
+
+                            generateGif(res.assets.map(it => it.uri).join(","))
                         }
                     }).catch(e => {
                         console.error("launchImageLibrary: " + e)

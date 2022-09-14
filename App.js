@@ -3,7 +3,8 @@ import React, { Component } from 'react'
 import { Colors } from './src/themes/Colors';
 import AppNavigation from './src/navigation/AppNavigation'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'react-native';
+import { LogBox, StatusBar } from 'react-native';
+LogBox.ignoreAllLogs();
 
 export default class App extends Component {
   render() {
