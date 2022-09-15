@@ -47,8 +47,8 @@ public class AndroidUtilsModule extends ReactContextBaseJavaModule {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @ReactMethod
-    public void generateGif(String pathsString, Promise promise) throws IOException {
-        AndroidUtilsManager.getInstance().generateGif(pathsString, promise);
+    public void generateGif(String pathsString, String fileName, Promise promise) throws IOException {
+        AndroidUtilsManager.getInstance().generateGif(pathsString, fileName, promise);
     }
 }
 

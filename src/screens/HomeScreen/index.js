@@ -19,7 +19,7 @@ import { widthWindow } from '../../utils/DeviceUtil'
 import ImagePicker from 'react-native-image-crop-picker';
 
 const {
-    generateGif
+    generateGif,
 } = NativeModules.AndroidUtils
 
 export default class HomeScreen extends Component {
@@ -75,9 +75,9 @@ export default class HomeScreen extends Component {
             <Pressable
                 onPress={() => alert("click")}>
                 <Image
-                    source={{ uri: item.uri }}
+                    source={{ uri: item.uri || item.path }}
                     style={[{
-                        borderRadius: 16
+                        borderRadius: 16,
                     }, dynamicStyle]}
                 />
             </Pressable>
@@ -93,7 +93,7 @@ export default class HomeScreen extends Component {
                 flex: 1,
                 paddingHorizontal: this.listMargin
             }}
-            keyExtractor={(item, index) => item.uri + index}
+            keyExtractor={(item, index) => (item.uri || item.path) + index}
             contentContainerStyle={styles.listContentContainerStyle}
             renderItem={this.renderImage}
         />
@@ -108,16 +108,15 @@ export default class HomeScreen extends Component {
             <Pressable
                 onPress={() => {
                     launchImageLibrary({
-                        mediaType: 'photo',
+                        mediaType: "photo",
                         includeExtra: false,
                         selectionLimit: 0
-                    }).then(res => {
+                    }).then(async res => {
                         if (size(res.assets)) {
-                            console.log("pick photos", res.assets)
                             const { listImages } = this.state
                             this.setState({ listImages: [...res.assets, ...listImages] })
-
-                            generateGif(res.assets.map(it => it.uri).join(","))
+                            // const path = await generateGif(res.assets[0].uri, "test2.gif")
+                            // console.log("generateGif", path)
                         }
                     }).catch(e => {
                         console.error("launchImageLibrary: " + e)
@@ -132,10 +131,13 @@ export default class HomeScreen extends Component {
                 <SVG.add_photo />
             </Pressable>
             <Pressable
+                hitSlop={16}
                 onPress={() => {
-                    ImagePicker.openCamera({ cameraType: 'back', compressImageQuality: 0.8 })
-                        .then(res => {
-                            console.log("res", res)
+                    ImagePicker.openCamera({ cameraType: 'back', compressImageQuality: 0.8, includeBase64: true })
+                        .then(async res => {
+                            this.setState({ listImages: [res, ...this.state.listImages] })
+                            // const path = await generateGif(res.path, "test3.gif")
+                            // console.log("generateGif", path)
                         })
                         .catch(e => {
                             console.error("openCamera: " + e)
