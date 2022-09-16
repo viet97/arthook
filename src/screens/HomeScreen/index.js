@@ -17,7 +17,9 @@ import { cameraPermissionError, permissionError } from '../../Define'
 import { Colors } from '../../themes/Colors'
 import { widthWindow } from '../../utils/DeviceUtil'
 import ImagePicker from 'react-native-image-crop-picker';
-
+import moment from "moment"
+import NavigationService from '../../navigation/NavigationService'
+import { ROUTER_NAME } from '../../navigation/NavigationConst'
 const {
     generateGif,
 } = NativeModules.AndroidUtils
@@ -99,7 +101,12 @@ export default class HomeScreen extends Component {
         />
     }
 
+    componentDidMount() {
+        NavigationService.getInstance().navigate({ routerName: ROUTER_NAME.ALBUM.name })
+    }
+
     render() {
+        const { listImages } = this.state
         return <View
             style={styles.container}>
             {this.renderListImages()}
@@ -151,12 +158,32 @@ export default class HomeScreen extends Component {
                 style={styles.camera}>
                 <SVG.camera />
             </Pressable>
+            {size(listImages) ? <Pressable
+                onPress={async () => {
+                    this.setState({ isLoading: true })
+                    await generateGif(listImages.map(it => it.uri || it.path).join(","), `arthook_${moment(new Date()).format("MMDDYY")}.gif`)
+                    this.setState({ listImages: [], isLoading: false })
+                }}
+                style={styles.done}>
+                <Text semiBold>Done</Text>
+            </Pressable> : null}
         </View>
     }
 }
 
 
 const styles = StyleSheet.create({
+    done: {
+        position: 'absolute',
+        top: 24,
+        right: 16,
+        height: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 53,
+        paddingHorizontal: 16,
+        backgroundColor: Colors.white
+    },
     container: {
         backgroundColor: Colors.black,
         flex: 1
