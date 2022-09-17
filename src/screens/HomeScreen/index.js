@@ -1,4 +1,4 @@
-import { size } from 'lodash'
+import { cloneDeep, size } from 'lodash'
 import React, { Component } from 'react'
 import {
     StyleSheet,
@@ -7,25 +7,26 @@ import {
     ImageBackground,
     Pressable,
     FlatList,
-    Image
+    Image,
+    ActivityIndicator
 } from 'react-native'
 import { launchImageLibrary } from 'react-native-image-picker'
 import { Images } from '../../../assets/image'
 import { SVG } from '../../../assets/svg'
 import Text from '../../components/Text'
-import { cameraPermissionError, permissionError } from '../../Define'
 import { Colors } from '../../themes/Colors'
 import { widthWindow } from '../../utils/DeviceUtil'
 import ImagePicker from 'react-native-image-crop-picker';
 import moment from "moment"
 import NavigationService from '../../navigation/NavigationService'
 import { ROUTER_NAME } from '../../navigation/NavigationConst'
+import { checkWriteFilePermission, savePhotoToAlbum } from '../../utils/PhotoUtil'
 const {
     generateGif,
+    showToast
 } = NativeModules.AndroidUtils
 
 export default class HomeScreen extends Component {
-
     constructor(props) {
         super(props)
 
@@ -38,6 +39,7 @@ export default class HomeScreen extends Component {
         this.listWidth = widthWindow - this.listMargin * 2
         this.itemWidth = (this.listWidth - this.itemMargin * (this.numColumns - 1)) / this.numColumns
         this.itemHeight = this.itemWidth * 290 / 166
+        this.isCreating = false
     }
 
 
@@ -65,6 +67,14 @@ export default class HomeScreen extends Component {
             </View>
         )
     }
+    deleteImage = index => {
+        const { listImages } = this.state
+        const cloneDeepImages = cloneDeep(listImages)
+        if (size(cloneDeepImages) > index) {
+            cloneDeepImages.splice(index, 1)
+            this.setState({ listImages: cloneDeepImages })
+        }
+    }
 
     renderImage = ({ item, index }) => {
         const dynamicStyle = {
@@ -75,21 +85,51 @@ export default class HomeScreen extends Component {
         }
         return (
             <Pressable
-                onPress={() => alert("click")}>
+                style={[styles.image, dynamicStyle]}
+                onPress={() => {
+                    NavigationService.getInstance().navigate({
+                        routerName: ROUTER_NAME.FULL_GIF_SCREEN.name,
+                        params: {
+                            uri: item.uri || item.path
+                        }
+                    })
+                }}>
                 <Image
                     source={{ uri: item.uri || item.path }}
-                    style={[{
-                        borderRadius: 16,
-                    }, dynamicStyle]}
+                    style={{
+                        width: this.itemWidth,
+                        height: this.itemHeight,
+                    }}
                 />
+                <Pressable
+                    onPress={() => this.deleteImage(index)}
+                    hitSlop={16}
+                    style={styles.deleteImage}>
+                    <SVG.close width={16} height={16} />
+                </Pressable>
             </Pressable>
         )
     }
 
     renderListImages = () => {
-        const { listImages } = this.state
+        const { listImages, isLoading } = this.state
+        if (isLoading) {
+            return (
+                <View
+                    style={styles.indicatorContainer}>
+                    <ActivityIndicator
+                        size={"large"}
+                        style={styles.indicator}
+                        color={Colors.white} />
+                    <Text
+                        semiBold
+                        style={styles.creatingGif}>Creating GIF...</Text>
+
+                </View>
+            )
+        }
         return <FlatList
-            numColumns={3}
+            numColumns={this.numColumns}
             data={listImages}
             style={{
                 flex: 1,
@@ -102,7 +142,7 @@ export default class HomeScreen extends Component {
     }
 
     componentDidMount() {
-        NavigationService.getInstance().navigate({ routerName: ROUTER_NAME.ALBUM.name })
+        checkWriteFilePermission()
     }
 
     render() {
@@ -122,8 +162,6 @@ export default class HomeScreen extends Component {
                         if (size(res.assets)) {
                             const { listImages } = this.state
                             this.setState({ listImages: [...res.assets, ...listImages] })
-                            // const path = await generateGif(res.assets[0].uri, "test2.gif")
-                            // console.log("generateGif", path)
                         }
                     }).catch(e => {
                         console.error("launchImageLibrary: " + e)
@@ -138,13 +176,62 @@ export default class HomeScreen extends Component {
                 <SVG.add_photo />
             </Pressable>
             <Pressable
+                onPress={() => {
+                    NavigationService.getInstance().navigate({
+                        routerName: ROUTER_NAME.ALBUM.name
+                    })
+                }}
+                style={styles.myAlbum}>
+                <SVG.my_album />
+            </Pressable>
+            <Pressable
+                onPress={async () => {
+                    if (this.isCreating) {
+                        return showToast("GIF is creating, please wait...")
+                    }
+                    if (!size(this.state.listImages)) {
+                        return showToast("Please select at least 1 photo.")
+                    }
+                    if (size(this.state.listImages) > 5) {
+                        return showToast("Only support 1-5 photos per time.")
+                    }
+                    try {
+                        this.isCreating = true;
+                        const urisString = listImages.map(it => {
+                            if (it.uri) return it.uri
+                            return `from_camera${it.path}`
+                        }).join(",")
+                        this.setState({
+                            isLoading: true,
+                            listImages: []
+                        })
+                        const path = await generateGif(urisString, `arthook_${Date.now()}.gif`)
+                        if (path) {
+                            savePhotoToAlbum(path)
+                            NavigationService.getInstance().navigate({
+                                routerName: ROUTER_NAME.FULL_GIF_SCREEN.name,
+                                params: {
+                                    uri: path,
+                                    hasShare: true
+                                }
+                            })
+                        }
+                    } catch (e) {
+                        console.error(e)
+                    }
+                    this.setState({ isLoading: false })
+                    this.isCreating = false;
+
+                }}
+                style={styles.convert}>
+                <SVG.convert />
+            </Pressable>
+            <Pressable
                 hitSlop={16}
                 onPress={() => {
-                    ImagePicker.openCamera({ cameraType: 'back', compressImageQuality: 0.8, includeBase64: true })
+                    ImagePicker.openCamera({ cameraType: 'back', compressImageQuality: 0.8 })
                         .then(async res => {
                             this.setState({ listImages: [res, ...this.state.listImages] })
-                            // const path = await generateGif(res.path, "test3.gif")
-                            // console.log("generateGif", path)
                         })
                         .catch(e => {
                             console.error("openCamera: " + e)
@@ -158,21 +245,46 @@ export default class HomeScreen extends Component {
                 style={styles.camera}>
                 <SVG.camera />
             </Pressable>
-            {size(listImages) ? <Pressable
-                onPress={async () => {
-                    this.setState({ isLoading: true })
-                    await generateGif(listImages.map(it => it.uri || it.path).join(","), `arthook_${moment(new Date()).format("MMDDYY")}.gif`)
-                    this.setState({ listImages: [], isLoading: false })
-                }}
-                style={styles.done}>
-                <Text semiBold>Done</Text>
-            </Pressable> : null}
         </View>
     }
 }
 
 
 const styles = StyleSheet.create({
+    indicatorContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    indicator: {
+        marginBottom: 16
+    },
+    creatingGif: {
+        color: Colors.white,
+        fontSize: 16
+    },
+    deleteImage: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        backgroundColor: 'black',
+        padding: 4,
+        borderRadius: 200
+    },
+    image: {
+        borderRadius: 16,
+        overflow: 'hidden'
+    },
+    myAlbum: {
+        position: 'absolute',
+        bottom: 29,
+        right: 52
+    },
+    convert: {
+        position: 'absolute',
+        bottom: 29,
+        left: 52
+    },
     done: {
         position: 'absolute',
         top: 24,

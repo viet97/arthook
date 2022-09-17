@@ -30,7 +30,7 @@ public class AndroidUtilsManager {
     public static AndroidUtilsManager getInstance() {
         return instance;
     }
-    private int MAX_RESOLUTION = 720;
+    private int MAX_RESOLUTION = 240;
     ArrayList<int[][]> rgbFrameArray = new ArrayList<>();
     private int pathsSize = 0;
 
@@ -44,10 +44,9 @@ public class AndroidUtilsManager {
         for (String path: paths){
             boolean needInvert = false;
             Bitmap bitmap;
-            if(path.contains("file://")){
+            if(path.contains("from_camerafile://")){
                 //from camera
-                Log.d(TAG, "generateGif path: "+ path.substring(6));
-                bitmap = BitmapFactory.decodeFile(path.substring(6));
+                bitmap = BitmapFactory.decodeFile(path.substring("from_camerafile://".length()));
                 needInvert = true;
             }else{
                 //from picker
@@ -55,7 +54,7 @@ public class AndroidUtilsManager {
                 bitmap = BitmapFactory.decodeStream(ims);
             }
 
-            Log.d(TAG, "generateGif bitmap: " + bitmap);
+            Log.d(TAG, "generateGif bitmap: " + needInvert);
 
             if (bitmap == null) {
                 promise.reject("Failed to decode. Path is incorrect or image is corrupted");
@@ -97,8 +96,7 @@ public class AndroidUtilsManager {
             Bitmap bitmap = bitmaps[0];
             bitmap = Bitmap.createScaledBitmap(bitmap, MAX_RESOLUTION, MAX_RESOLUTION, true);
             ArrayList<ArrayList<Integer>> rgbFramesForImage = new ArrayList<>();
-
-            if(needInvert){
+//            if(needInvert){
                 for (int x =0; x < MAX_RESOLUTION; x++) {
                     ArrayList<Integer> rgbFrame = new ArrayList<>();
                     for (int y = 0; y < MAX_RESOLUTION; y++) {
@@ -119,19 +117,19 @@ public class AndroidUtilsManager {
                         pivot[col][row] = rgbFramesForImageInts[row][col];
 
                 rgbFrameArray.add(pivot);
-            }else{
-                for (int x = 0; x < MAX_RESOLUTION; x++) {
-                    ArrayList<Integer> rgbFrame = new ArrayList<>();
-                    for (int y = MAX_RESOLUTION - 1; y >= 0; y--) {
-                        int color = bitmap.getPixel(x, y);
-                        rgbFrame.add(color);
-                    }
-                    rgbFramesForImage.add(rgbFrame);
-                }
-                rgbFrameArray.add(rgbFramesForImage.stream().map(u -> u.stream().mapToInt(i->i).toArray()  ).toArray(int[][]::new));
-            }
+//            }else{
+//                for (int x = 0; x < MAX_RESOLUTION; x++) {
+//                    ArrayList<Integer> rgbFrame = new ArrayList<>();
+//                    for (int y = MAX_RESOLUTION - 1; y >= 0; y--) {
+//                        int color = bitmap.getPixel(x, y);
+//                        rgbFrame.add(color);
+//                    }
+//                    rgbFramesForImage.add(rgbFrame);
+//                }
+//                rgbFrameArray.add(rgbFramesForImage.stream().map(u -> u.stream().mapToInt(i->i).toArray()  ).toArray(int[][]::new));
+//            }
 
-            Log.d(TAG, "doInBackground: " + rgbFrameArray.size());
+            Log.d(TAG, "doInBackground: " + rgbFrameArray.size() + needInvert);
             if(rgbFrameArray.size() == this.totalSize){
                 File file = new File(Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_DOWNLOADS), this.fileName);

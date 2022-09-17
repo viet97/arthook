@@ -1,4 +1,5 @@
 import AlbumScreen from "../screens/AlbumScreen";
+import FullGifScreen from "../screens/FullGifScreen";
 import HomeScreen from "../screens/HomeScreen";
 
 export const ROUTER_NAME = {
@@ -11,5 +12,10 @@ export const ROUTER_NAME = {
     title: 'Album',
     name: 'AlbumScreen',
     component: AlbumScreen,
+  },
+  FULL_GIF_SCREEN: {
+    title: 'FullGif',
+    name: 'FullGifScreen',
+    component: FullGifScreen,
   },
 };

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.15.15",
+    "@react-native-community/cameraroll": "^4.1.2",
     "@react-native-community/cli-platform-android": "^6.3.0",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-native-community/netinfo": "^9.3.0",
@@ -31,6 +32,7 @@
     "react-native-image-picker": "4.8.5",
     "react-native-linear-gradient": "^2.5.6",
     "react-native-safe-area-context": "3.1.9",
+    "react-native-share": "^7.9.0",
     "react-native-svg": "^12.3.0",
     "react-native-svg-transformer": "^1.0.0"
   },
