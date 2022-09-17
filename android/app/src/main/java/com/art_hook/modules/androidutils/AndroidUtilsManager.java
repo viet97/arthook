@@ -61,18 +61,6 @@ public class AndroidUtilsManager {
                 continue;
             }
 
-//            if(bitmapWidth == 0 || bitmapHeight == 0){
-//                int width = bitmap.getWidth();
-//                int height = bitmap.getHeight();
-//                if(width > height){
-//                    bitmapWidth = MAX_RESOLUTION;
-//                    bitmapHeight = (int) Math.floor(height * bitmapWidth/width);
-//                }else{
-//                    bitmapHeight = MAX_RESOLUTION;
-//                    bitmapWidth = (int) Math.floor(width * bitmapHeight/height);
-//                }
-//            }
-
             RGBAsyncTask rgbAsyncTask = new RGBAsyncTask(this.pathsSize,fileName,needInvert, promise);
             rgbAsyncTask.execute(bitmap);
         }
@@ -94,12 +82,50 @@ public class AndroidUtilsManager {
         @Override
         protected Void doInBackground(Bitmap... bitmaps) {
             Bitmap bitmap = bitmaps[0];
-            bitmap = Bitmap.createScaledBitmap(bitmap, MAX_RESOLUTION, MAX_RESOLUTION, true);
+            int bitmapWidth = bitmap.getWidth();
+            int bitmapHeight = bitmap.getHeight();
+            int newBitmapWidth, newBitmapHeight, space = 0;
+
+                if(bitmapWidth > bitmapHeight){
+                    newBitmapWidth = MAX_RESOLUTION;
+                    newBitmapHeight = (int) Math.floor(bitmapHeight*newBitmapWidth / bitmapWidth);
+                    if(Math.abs(newBitmapWidth - newBitmapHeight) % 2 != 0){
+                        newBitmapHeight -= 1;
+                    }
+                    space = (newBitmapWidth - newBitmapHeight)/2;
+                }else{
+                    newBitmapHeight = MAX_RESOLUTION;
+                    newBitmapWidth = (int) Math.floor(bitmapWidth*newBitmapHeight / bitmapHeight);
+                    if(Math.abs(newBitmapHeight - newBitmapWidth) % 2 != 0){
+                        newBitmapWidth -= 1;
+                    }
+                    space = (newBitmapHeight - newBitmapWidth)/2;
+                }
+
+            bitmap = Bitmap.createScaledBitmap(bitmap, newBitmapWidth, newBitmapHeight, true);
             ArrayList<ArrayList<Integer>> rgbFramesForImage = new ArrayList<>();
 //            if(needInvert){
                 for (int x =0; x < MAX_RESOLUTION; x++) {
                     ArrayList<Integer> rgbFrame = new ArrayList<>();
                     for (int y = 0; y < MAX_RESOLUTION; y++) {
+                        if(newBitmapWidth < newBitmapHeight){
+                            if(space != 0 && (x < space || x >= MAX_RESOLUTION-space)) {
+                                rgbFrame.add(0);
+                            }else{
+                                int color = bitmap.getPixel(x - space, y);
+                                rgbFrame.add(color);
+                            }
+                            continue;
+                        }
+                        if(newBitmapHeight < newBitmapWidth){
+                            if(space != 0 && (y < space || y >= MAX_RESOLUTION - space)) {
+                                rgbFrame.add(0);
+                            }else{
+                                int color = bitmap.getPixel(x, y - space);
+                                rgbFrame.add(color);
+                            }
+                            continue;
+                        }
                         int color = bitmap.getPixel(x, y);
                         rgbFrame.add(color);
                     }

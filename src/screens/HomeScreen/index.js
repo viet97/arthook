@@ -189,11 +189,11 @@ export default class HomeScreen extends Component {
                     if (this.isCreating) {
                         return showToast("GIF is creating, please wait...")
                     }
-                    if (!size(this.state.listImages)) {
-                        return showToast("Please select at least 1 photo.")
+                    if (size(this.state.listImages) < 2) {
+                        return showToast("Please select at least 2 photos.")
                     }
                     if (size(this.state.listImages) > 5) {
-                        return showToast("Only support 1-5 photos per time.")
+                        return showToast("Only support max 5 photos per time.")
                     }
                     try {
                         this.isCreating = true;
