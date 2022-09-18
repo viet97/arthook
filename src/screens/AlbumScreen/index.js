@@ -21,7 +21,8 @@ export default class AlbumScreen extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            listImages: null
+            listImages: null,
+            isLoading: false
         }
         this.numColumns = 4;
         this.itemMargin = 2;
@@ -32,6 +33,7 @@ export default class AlbumScreen extends Component {
     }
 
     componentDidMount() {
+        this.setState({ isLoading: true })
         CameraRoll.getPhotos({
             first: 10000,
             groupName: "Arthook",
@@ -40,7 +42,7 @@ export default class AlbumScreen extends Component {
             if (size(res?.edges)) {
                 this.setState({ listImages: res?.edges })
             }
-        })
+        }).finally(() => this.setState({ isLoading: false }))
     }
 
     renderHeader = () => {
@@ -92,8 +94,8 @@ export default class AlbumScreen extends Component {
     }
 
     renderList = () => {
-        const { listImages } = this.state
-        if (!listImages) return (
+        const { listImages, isLoading } = this.state
+        if (isLoading) return (
             <View
                 style={{
                     flex: 1,
