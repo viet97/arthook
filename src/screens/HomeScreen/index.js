@@ -286,6 +286,15 @@ export default class HomeScreen extends Component {
                 isVisible={this.state.showPremiumModal}>
                 <View
                     style={styles.modalContent}>
+                    <Image
+                        source={Images.premium}
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            width: '100%',
+                            height: '100%'
+                        }} />
                     <View
                         style={styles.topLine} />
                     <Text
@@ -296,7 +305,14 @@ export default class HomeScreen extends Component {
                     <Text
                         style={styles.premiumDes}
                         semiBold>
-                        Enter code here to continue using Arthook and get unlimited features
+                        Enter code here to continue using Arthook and get unlimited features:
+                    </Text>
+                    <Text
+                        style={styles.unlimitedFeatures}
+                        semiBold>
+                        - Unlimited Gifs.{"\n"}
+                        - Unlimited Photos selected.{"\n"}
+                        - Gif with best quality.{"\n"}
                     </Text>
                     <TextInput
                         value={this.state.code}
@@ -326,6 +342,11 @@ export default class HomeScreen extends Component {
 
 
 const styles = StyleSheet.create({
+    unlimitedFeatures: {
+        fontSize: 13,
+        color: "#e2e8ee",
+        marginHorizontal: 24
+    },
     submit: {
         fontSize: 15,
         color: Colors.white
@@ -337,7 +358,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginHorizontal: 24,
         borderRadius: 16,
-        backgroundColor: "#6366f1"
+        backgroundColor: "#6366f1",
+        marginBottom: 32
     },
     codeInput: {
         height: 40,
@@ -351,12 +373,13 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginHorizontal: 24,
         marginTop: 16,
-        color: "#484748"
+        color: "#e2e8ee",
     },
     premiumRequired: {
         fontSize: 20,
         textAlign: 'center',
         marginTop: 8,
+        color: Colors.white
     },
     topLine: {
         marginTop: 12,
@@ -375,7 +398,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderTopRightRadius: 24,
         borderTopLeftRadius: 24,
-        paddingBottom: 32
+        overflow: "hidden"
     },
     placeHolder: {
         color: Colors.white
