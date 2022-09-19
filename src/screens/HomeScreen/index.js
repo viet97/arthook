@@ -1,4 +1,4 @@
-import { cloneDeep, size } from 'lodash'
+import { cloneDeep, size, trim } from 'lodash'
 import React, { Component } from 'react'
 import {
     StyleSheet,
@@ -8,7 +8,8 @@ import {
     Pressable,
     FlatList,
     Image,
-    ActivityIndicator
+    ActivityIndicator,
+    TextInput
 } from 'react-native'
 import { launchImageLibrary } from 'react-native-image-picker'
 import { Images } from '../../../assets/image'
@@ -17,10 +18,13 @@ import Text from '../../components/Text'
 import { Colors } from '../../themes/Colors'
 import { widthWindow } from '../../utils/DeviceUtil'
 import ImagePicker from 'react-native-image-crop-picker';
-import moment from "moment"
 import NavigationService from '../../navigation/NavigationService'
 import { ROUTER_NAME } from '../../navigation/NavigationConst'
 import { checkWriteFilePermission, savePhotoToAlbum } from '../../utils/PhotoUtil'
+import Modal from 'react-native-modal';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { GIF_FREE_COUNT_KEY, MAX_FREE_GIF } from '../../Define'
+
 const {
     generateGif,
     showToast
@@ -31,7 +35,9 @@ export default class HomeScreen extends Component {
         super(props)
 
         this.state = {
-            listImages: []
+            listImages: [],
+            code: "",
+            showPremiumModal: false
         }
         this.numColumns = 2;
         this.itemMargin = 16;
@@ -40,6 +46,7 @@ export default class HomeScreen extends Component {
         this.itemWidth = (this.listWidth - this.itemMargin * (this.numColumns - 1)) / this.numColumns
         this.itemHeight = this.itemWidth * 290 / 166
         this.isCreating = false
+        this.gifCreatedCount = 0;
     }
 
 
@@ -79,7 +86,7 @@ export default class HomeScreen extends Component {
     renderImage = ({ item, index }) => {
         const dynamicStyle = {
             marginTop: this.itemMargin,
-            marginRight: (index + 1) % 3 ? this.itemMargin : 0,
+            marginRight: (index + 1) % this.numColumns ? this.itemMargin : 0,
             width: this.itemWidth,
             height: this.itemHeight,
         }
@@ -134,7 +141,10 @@ export default class HomeScreen extends Component {
                 style={styles.placeholderContainer}>
                 <Text
                     semiBold
-                    style={styles.placeHolder}>Please select photo to create gif...</Text>
+                    style={styles.placeHolder}>Welcome to Arthook</Text>
+                <Text
+                    semiBold
+                    style={[styles.placeHolder, { marginTop: 4 }]}>Please select photos to create gif...</Text>
             </View>
         }
 
@@ -153,6 +163,11 @@ export default class HomeScreen extends Component {
 
     componentDidMount() {
         checkWriteFilePermission()
+        AsyncStorage.getItem(GIF_FREE_COUNT_KEY).then(count => {
+            if (count) {
+                this.gifCreatedCount = Number(count)
+            }
+        })
     }
 
     render() {
@@ -199,6 +214,9 @@ export default class HomeScreen extends Component {
                     if (this.isCreating) {
                         return showToast("GIF is creating, please wait...")
                     }
+                    if (this.gifCreatedCount >= MAX_FREE_GIF) {
+                        return this.setState({ showPremiumModal: true })
+                    }
                     if (size(this.state.listImages) < 2) {
                         return showToast("Please select at least 2 photos.")
                     }
@@ -217,6 +235,8 @@ export default class HomeScreen extends Component {
                         })
                         const path = await generateGif(urisString, `arthook_${Date.now()}.gif`)
                         if (path) {
+                            this.gifCreatedCount += 1
+                            AsyncStorage.setItem(GIF_FREE_COUNT_KEY, `${this.gifCreatedCount}`)
                             savePhotoToAlbum(path)
                             NavigationService.getInstance().navigate({
                                 routerName: ROUTER_NAME.FULL_GIF_SCREEN.name,
@@ -255,12 +275,108 @@ export default class HomeScreen extends Component {
                 style={styles.camera}>
                 <SVG.camera />
             </Pressable>
+            <Modal
+                avoidKeyboard
+                useNativeDriver
+                onBackdropPress={() => { this.setState({ showPremiumModal: false }) }}
+                onBackButtonPress={() => { this.setState({ showPremiumModal: false }) }}
+                style={[
+                    styles.modalContainer,
+                ]}
+                isVisible={this.state.showPremiumModal}>
+                <View
+                    style={styles.modalContent}>
+                    <View
+                        style={styles.topLine} />
+                    <Text
+                        style={styles.premiumRequired}
+                        bold>
+                        Premium Required
+                    </Text>
+                    <Text
+                        style={styles.premiumDes}
+                        semiBold>
+                        Enter code here to continue using Arthook and get unlimited features
+                    </Text>
+                    <TextInput
+                        value={this.state.code}
+                        onChangeText={code => this.setState({ code })}
+                        style={styles.codeInput}
+                        placeholder={"Enter code here..."}
+                    />
+                    <Pressable
+                        onPress={() => {
+                            if (!trim(this.state.code)) {
+                                return showToast("Code is required.")
+                            }
+                            showToast("Code is invalid.")
+                        }}
+                        style={styles.submitButton}>
+                        <Text
+                            semiBold
+                            style={styles.submit}>
+                            Submit
+                        </Text>
+                    </Pressable>
+                </View>
+            </Modal>
         </View>
     }
 }
 
 
 const styles = StyleSheet.create({
+    submit: {
+        fontSize: 15,
+        color: Colors.white
+    },
+    submitButton: {
+        marginTop: 16,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 24,
+        borderRadius: 16,
+        backgroundColor: "#6366f1"
+    },
+    codeInput: {
+        height: 40,
+        marginHorizontal: 24,
+        marginTop: 16,
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#f1f4f9'
+    },
+    premiumDes: {
+        fontSize: 14,
+        marginHorizontal: 24,
+        marginTop: 16,
+        color: "#484748"
+    },
+    premiumRequired: {
+        fontSize: 20,
+        textAlign: 'center',
+        marginTop: 8,
+    },
+    topLine: {
+        marginTop: 12,
+        backgroundColor: "#e2e8ee",
+        width: 40,
+        height: 6,
+        borderRadius: 12,
+        alignSelf: 'center'
+    },
+    modalContainer: {
+        flex: 1,
+        margin: 0,
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopRightRadius: 24,
+        borderTopLeftRadius: 24,
+        paddingBottom: 32
+    },
     placeHolder: {
         color: Colors.white
     },
