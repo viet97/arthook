@@ -113,14 +113,6 @@ export default class HomeScreen extends Component {
 
     renderListImages = () => {
         const { listImages, isLoading } = this.state
-        if (!size(listImages)) {
-            return <View
-                style={styles.placeholderContainer}>
-                <Text
-                    semiBold
-                    style={styles.placeHolder}>Please select photo to create gif...</Text>
-            </View>
-        }
         if (isLoading) {
             return (
                 <View
@@ -136,6 +128,16 @@ export default class HomeScreen extends Component {
                 </View>
             )
         }
+
+        if (!size(listImages)) {
+            return <View
+                style={styles.placeholderContainer}>
+                <Text
+                    semiBold
+                    style={styles.placeHolder}>Please select photo to create gif...</Text>
+            </View>
+        }
+
         return <FlatList
             numColumns={this.numColumns}
             data={listImages}
