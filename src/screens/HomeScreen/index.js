@@ -113,6 +113,14 @@ export default class HomeScreen extends Component {
 
     renderListImages = () => {
         const { listImages, isLoading } = this.state
+        if (!size(listImages)) {
+            return <View
+                style={styles.placeholderContainer}>
+                <Text
+                    semiBold
+                    style={styles.placeHolder}>Please select photo to create gif...</Text>
+            </View>
+        }
         if (isLoading) {
             return (
                 <View
@@ -251,6 +259,14 @@ export default class HomeScreen extends Component {
 
 
 const styles = StyleSheet.create({
+    placeHolder: {
+        color: Colors.white
+    },
+    placeholderContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
     indicatorContainer: {
         flex: 1,
         alignItems: 'center',
