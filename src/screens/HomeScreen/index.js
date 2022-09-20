@@ -217,8 +217,8 @@ export default class HomeScreen extends Component {
                     if (size(this.state.listImages) < 2) {
                         return showToast("Please select at least 2 photos.")
                     }
-                    if (size(this.state.listImages) > 5) {
-                        return showToast("Only support max 5 photos per time.")
+                    if (size(this.state.listImages) > 7) {
+                        return showToast("Only support max 7 photos per time.")
                     }
                     try {
                         this.isCreating = true;
@@ -300,6 +300,7 @@ export default class HomeScreen extends Component {
                         style={styles.unlimitedFeatures}
                         semiBold>
                         - Unlimited Gifs.{"\n"}
+                        - Unlimited Photos selected.{"\n"}
                         - Gif with best quality.{"\n"}
                     </Text>
                     <TextInput
