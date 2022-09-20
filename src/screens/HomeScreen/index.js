@@ -23,7 +23,7 @@ import { ROUTER_NAME } from '../../navigation/NavigationConst'
 import { checkWriteFilePermission, savePhotoToAlbum } from '../../utils/PhotoUtil'
 import Modal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { GIF_FREE_COUNT_KEY, MAX_FREE_GIF } from '../../Define'
+import { GIF_FREE_COUNT_KEY, MAX_FREE_GIF, PREMIUM_CODE, PREMIUM_KEY } from '../../Define'
 
 const {
     generateGif,
@@ -46,7 +46,6 @@ export default class HomeScreen extends Component {
         this.itemWidth = (this.listWidth - this.itemMargin * (this.numColumns - 1)) / this.numColumns
         this.itemHeight = this.itemWidth * 290 / 166
         this.isCreating = false
-        this.gifCreatedCount = 0;
     }
 
 
@@ -163,9 +162,9 @@ export default class HomeScreen extends Component {
 
     componentDidMount() {
         checkWriteFilePermission()
-        AsyncStorage.getItem(GIF_FREE_COUNT_KEY).then(count => {
-            if (count) {
-                this.gifCreatedCount = Number(count)
+        AsyncStorage.getItem(PREMIUM_KEY).then(isPremium => {
+            if (!isPremium) {
+                this.setState({ showPremiumModal: true })
             }
         })
     }
@@ -214,9 +213,7 @@ export default class HomeScreen extends Component {
                     if (this.isCreating) {
                         return showToast("GIF is creating, please wait...")
                     }
-                    if (this.gifCreatedCount >= MAX_FREE_GIF) {
-                        return this.setState({ showPremiumModal: true })
-                    }
+
                     if (size(this.state.listImages) < 2) {
                         return showToast("Please select at least 2 photos.")
                     }
@@ -278,8 +275,6 @@ export default class HomeScreen extends Component {
             <Modal
                 avoidKeyboard
                 useNativeDriver
-                onBackdropPress={() => { this.setState({ showPremiumModal: false }) }}
-                onBackButtonPress={() => { this.setState({ showPremiumModal: false }) }}
                 style={[
                     styles.modalContainer,
                 ]}
@@ -288,13 +283,7 @@ export default class HomeScreen extends Component {
                     style={styles.modalContent}>
                     <Image
                         source={Images.premium}
-                        style={{
-                            position: 'absolute',
-                            left: 0,
-                            top: 0,
-                            width: '100%',
-                            height: '100%'
-                        }} />
+                        style={styles.premiumBackground} />
                     <View
                         style={styles.topLine} />
                     <Text
@@ -311,7 +300,6 @@ export default class HomeScreen extends Component {
                         style={styles.unlimitedFeatures}
                         semiBold>
                         - Unlimited Gifs.{"\n"}
-                        - Unlimited Photos selected.{"\n"}
                         - Gif with best quality.{"\n"}
                     </Text>
                     <TextInput
@@ -322,17 +310,35 @@ export default class HomeScreen extends Component {
                     />
                     <Pressable
                         onPress={() => {
+                            const { code } = this.state
+                            if (this.isLoading) return
                             if (!trim(this.state.code)) {
                                 return showToast("Code is required.")
+                            }
+                            if (trim(code) === PREMIUM_CODE) {
+                                this.loadingCode = true;
+                                this.setState({ loadingCode: true })
+                                AsyncStorage.setItem(PREMIUM_KEY, `premium`)
+                                setTimeout(() => {
+                                    this.setState({
+                                        loadingCode: false,
+                                        buttonText: "Success"
+                                    })
+                                    setTimeout(() => {
+                                        this.setState({ showPremiumModal: false })
+                                        this.loadingCode = false;
+                                    }, 1000)
+                                }, 2000)
+                                return
                             }
                             showToast("Code is invalid.")
                         }}
                         style={styles.submitButton}>
-                        <Text
+                        {!this.state.loadingCode ? <Text
                             semiBold
                             style={styles.submit}>
-                            Submit
-                        </Text>
+                            {this.state.buttonText || "Submit"}
+                        </Text> : <ActivityIndicator size={'small'} color={Colors.white} />}
                     </Pressable>
                 </View>
             </Modal>
@@ -342,6 +348,13 @@ export default class HomeScreen extends Component {
 
 
 const styles = StyleSheet.create({
+    premiumBackground: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%'
+    },
     unlimitedFeatures: {
         fontSize: 13,
         color: "#e2e8ee",
