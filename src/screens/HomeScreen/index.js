@@ -381,7 +381,8 @@ const styles = StyleSheet.create({
         marginTop: 16,
         borderRadius: 8,
         paddingHorizontal: 16,
-        backgroundColor: '#f1f4f9'
+        backgroundColor: '#f1f4f9',
+        color: Colors.black
     },
     premiumDes: {
         fontSize: 14,
